@@ -1,0 +1,8 @@
+{
+  "name": "ellaisys/aws-cognito",
+  "autoload": {
+    "psr-4": {
+      "Ellaisys\\Cognito\\": "src/"
+    }
+  }
+}
