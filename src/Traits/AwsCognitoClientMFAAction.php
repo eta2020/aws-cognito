@@ -27,7 +27,7 @@ trait AwsCognitoClientMFAAction
      *
      * @param string $accessToken (optional)
      * @param string $session (optional)
-     *
+     * 
      * @return mixed
      */
     public function associateSoftwareTokenMFA(string $accessToken=null, string $session=null)
@@ -64,7 +64,7 @@ trait AwsCognitoClientMFAAction
      * @param string $accessToken (optional)
      * @param string $session (optional)
      * @param string $deviceName (optional)
-     *
+     * 
      * @return mixed
      */
     public function verifySoftwareTokenMFA(string $userCode, string $accessToken=null, string $session=null, string $deviceName=null)
@@ -127,7 +127,7 @@ trait AwsCognitoClientMFAAction
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminSetUserMFAPreference.html
      *
      * @param string $username
-     *
+     * 
      * @return mixed
      */
     public function setUserMFAPreferenceByAdmin(string $username, bool $isEnable=false)
@@ -156,7 +156,7 @@ trait AwsCognitoClientMFAAction
      * @param string $session
      * @param string $challengeValue
      * @param string $username
-     *
+     *  
      * @return \Aws\Result|false
      */
     public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username)
@@ -190,7 +190,7 @@ trait AwsCognitoClientMFAAction
             $firstMfaType=null;
             foreach ($mfaTypes as $mfaType) {
                 if (empty($firstMfaType)) { $firstMfaType=$mfaType; }
-
+                
                 $payload = array_merge($payload, [
                     'SMSMfaSettings' => [
                         'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SMS_MFA'):false,
@@ -202,6 +202,12 @@ trait AwsCognitoClientMFAAction
                     'SoftwareTokenMfaSettings' => [
                         'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SOFTWARE_TOKEN_MFA'):false,
                         'PreferredMfa' => (($firstMfaType=='SOFTWARE_TOKEN_MFA') && ($isEnable))
+                    ]
+                ]);
+            } //Loop ends
+
+            $response = $payload;
+        } catch (Exception $e) {
             throw $e;
         } //Try-catch ends
 

@@ -126,7 +126,7 @@ class AwsCognitoClient
      */
     const SMS_MFA = 'SMS_MFA';
 
-
+    
     /**
      * Constant representing the SOFTWARE TOKEN MFA challenge.
      *
@@ -391,7 +391,7 @@ class AwsCognitoClient
      *
      * @param string $username
      * @param string $groupname
-     *
+     * 
      * @return bool
      */
     public function adminAddUserToGroup(string $username, string $groupname)
@@ -428,8 +428,8 @@ class AwsCognitoClient
         //Validate phone for MFA
         if (config('cognito.mfa_setup')=="MFA_ENABLED") {
             if (empty($attributes['phone_number'])) { throw new HttpException(400, 'ERROR_MFA_ENABLED_PHONE_MISSING'); }
-        } //End if
-
+        } //End if        
+        
         //Force validate email
         if ($attributes['email'] && config('cognito.force_new_user_email_verified', false)) {
             $attributes['email_verified'] = 'true';
@@ -496,7 +496,7 @@ class AwsCognitoClient
      * @param string $username
      * @param string $password
      * @param string $session
-     *
+     * 
      * @return bool
      */
     public function confirmPassword($username, $password, $session)
@@ -694,7 +694,7 @@ class AwsCognitoClient
      * @param string $session
      * @param string $challengeValue
      * @param string $username
-     *
+     *  
      * @return \Aws\Result
      */
     protected function adminRespondToAuthChallenge(string $challengeName, string $session, string $challengeValue, string $username)
@@ -723,7 +723,7 @@ class AwsCognitoClient
                         'SOFTWARE_TOKEN_MFA_CODE' => $challengeValue
                     ]);
                     break;
-
+                
                 case 'NEW_PASSWORD_REQUIRED':
                     $challengeResponse = array_merge($challengeResponse, [
                         'NEW_PASSWORD' => $challengeValue
@@ -861,7 +861,7 @@ class AwsCognitoClient
         return $userAttributes;
     } //Function ends
 
-
+    
     /**
      * Generate a new token using refresh token.
      *
@@ -900,7 +900,7 @@ class AwsCognitoClient
 
         return $response;
     } //Function ends
-
+    
 
     /**
      * Revoke all the access tokens from AWS Cognit for a specified refresh-token in a user pool.

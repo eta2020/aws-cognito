@@ -74,7 +74,7 @@ trait RegisterMFA
 
     /**
      * Toggle the MFA for the authenticated user
-     * 
+     *
      * @param  string  $guard
      * @param  bool    $isEnable (optional)
      *
@@ -96,7 +96,7 @@ trait RegisterMFA
 
             //Access Token
             $accessToken = $objToken;
-            
+
             //Use username from AWS to refresh token, not email from login!
             if (!empty($accessToken)) {
                 $response = $client->setUserMFAPreference($accessToken, $isEnable);
@@ -145,7 +145,7 @@ trait RegisterMFA
 
     /**
      * Toggle the MFA by the admin user
-     * 
+     *
      * @param  string  $guard
      * @param  string  $username
      * @param  bool    $isEnable (optional)
@@ -161,7 +161,7 @@ trait RegisterMFA
             //Get Authenticated user
             $authUser = Auth::guard($guard)->user();
             if (empty($authUser)) { throw new HttpException(400, 'EXCEPTION_INVALID_USER'); }
-           
+
             //Use username for the MFA configurations
             if (!empty($username)) {
                 return $client->setUserMFAPreferenceByAdmin($username, $isEnable);
