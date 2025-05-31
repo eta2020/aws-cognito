@@ -134,8 +134,6 @@ class AwsCognitoClient
      */
     const SOFTWARE_TOKEN_MFA = 'SOFTWARE_TOKEN_MFA';
 
-    const EMAIL_OTP = 'EMAIL_OTP';
-
 
     /**
      * @var CognitoIdentityProviderClient

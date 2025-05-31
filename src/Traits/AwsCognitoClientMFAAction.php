@@ -30,7 +30,7 @@ trait AwsCognitoClientMFAAction
      *
      * @return mixed
      */
-    public function associateSoftwareTokenMFA(string $accessToken = null, string $session = null)
+    public function associateSoftwareTokenMFA(string $accessToken=null, string $session=null)
     {
         try {
             //Build payload
@@ -38,30 +38,16 @@ trait AwsCognitoClientMFAAction
 
             //Access Token based Software MFA Token
             if (!empty($accessToken)) {
-                $payload = array_merge($payload, ['AccessToken' => $accessToken]);
-                $session = null;
+                $payload = array_merge($payload, [ 'AccessToken' => $accessToken ]);
+                $session=null;
             } //End if
 
             //Session based Software MFA Token
             if (!empty($session)) {
-                $payload = array_merge($payload, ['Session' => $session]);
+                $payload = array_merge($payload, [ 'Session' => $session ]);
             } //End if
 
             $response = $this->client->associateSoftwareToken($payload);
-            if (!empty($response)) {
-                //Build payload
-                $secretCode = $response->get('SecretCode');
-                $username = 'khanhnc4@ethan-tech.com';
-                $appName = (!empty($appName)) ?: config('app.name');
-                $uriTotp = 'otpauth://totp/' . $appName . ' (' . $username . ')?secret=' . $secretCode . '&issuer=' . config('app.name');
-                $payload = [
-                    'session_token' => $response['Session'],
-                    'SecretCode' => $secretCode,
-                    'SecretCodeQR' => config('cognito.mfa_qr_library') . $uriTotp,
-                    'TotpUri' => $uriTotp
-                ];
-                return $payload;
-            } //End if
         } catch (Exception $e) {
             throw $e;
         } //Try-catch ends
@@ -81,7 +67,7 @@ trait AwsCognitoClientMFAAction
      *
      * @return mixed
      */
-    public function verifySoftwareTokenMFA(string $userCode, string $accessToken = null, string $session = null, string $deviceName = null)
+    public function verifySoftwareTokenMFA(string $userCode, string $accessToken=null, string $session=null, string $deviceName=null)
     {
         try {
             //Build payload
@@ -92,18 +78,17 @@ trait AwsCognitoClientMFAAction
 
             //Access Token based Software MFA Token
             if (!empty($accessToken)) {
-                $payload = array_merge($payload, ['AccessToken' => $accessToken]);
-                $session = null;
+                $payload = array_merge($payload, [ 'AccessToken' => $accessToken ]);
+                $session=null;
             } //End if
 
             //Session based Software MFA Token
             if (!empty($session)) {
-                $payload = array_merge($payload, ['Session' => $session]);
+                $payload = array_merge($payload, [ 'Session' => $session ]);
             } //End if
 
             $response = $this->client->verifySoftwareToken($payload);
         } catch (Exception $e) {
-            dd($e);
             throw $e;
         } //Try-catch ends
 
@@ -118,7 +103,7 @@ trait AwsCognitoClientMFAAction
      * @param string $username
      * @return mixed
      */
-    public function setUserMFAPreference(string $accessToken, bool $isEnable = false)
+    public function setUserMFAPreference(string $accessToken, bool $isEnable=false)
     {
         try {
             //Build payload
@@ -145,7 +130,7 @@ trait AwsCognitoClientMFAAction
      *
      * @return mixed
      */
-    public function setUserMFAPreferenceByAdmin(string $username, bool $isEnable = false)
+    public function setUserMFAPreferenceByAdmin(string $username, bool $isEnable=false)
     {
         try {
             //Build payload
@@ -177,7 +162,7 @@ trait AwsCognitoClientMFAAction
     public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username)
     {
         try {
-            if (in_array($challengeName, [AwsCognitoClient::SMS_MFA, AwsCognitoClient::SOFTWARE_TOKEN_MFA, AwsCognitoClient::EMAIL_OTP])) {
+            if (in_array($challengeName, [AwsCognitoClient::SMS_MFA, AwsCognitoClient::SOFTWARE_TOKEN_MFA])) {
                 $response = $this->adminRespondToAuthChallenge($challengeName, $session, $challengeValue, $username);
             } else {
                 throw new HttpException(400, 'ERROR_UNSUPPORTED_MFA_CHALLENGE');
@@ -202,29 +187,21 @@ trait AwsCognitoClientMFAAction
             $payload = [];
 
             $mfaTypes = explode(',', config('cognito.mfa_type', 'SOFTWARE_TOKEN_MFA'));
-            $firstMfaType = null;
+            $firstMfaType=null;
             foreach ($mfaTypes as $mfaType) {
-                if (empty($firstMfaType)) {
-                    $firstMfaType = $mfaType;
-                }
+                if (empty($firstMfaType)) { $firstMfaType=$mfaType; }
 
                 $payload = array_merge($payload, [
                     'SMSMfaSettings' => [
-                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE') == 'MFA_ENABLED') && ($isEnable)) ? ($mfaType == 'SMS_MFA') : false,
-                        'PreferredMfa' => (($firstMfaType == 'SMS_MFA') && ($isEnable))
+                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SMS_MFA'):false,
+                        'PreferredMfa' => (($firstMfaType=='SMS_MFA') && ($isEnable))
                     ]
                 ]);
 
                 $payload = array_merge($payload, [
                     'SoftwareTokenMfaSettings' => [
-                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE') == 'MFA_ENABLED') && ($isEnable)) ? ($mfaType == 'SOFTWARE_TOKEN_MFA') : false,
-                        'PreferredMfa' => (($firstMfaType == 'SOFTWARE_TOKEN_MFA') && ($isEnable))
-                    ]
-                ]);
-            } //Loop ends
-
-            $response = $payload;
-        } catch (Exception $e) {
+                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SOFTWARE_TOKEN_MFA'):false,
+                        'PreferredMfa' => (($firstMfaType=='SOFTWARE_TOKEN_MFA') && ($isEnable))
             throw $e;
         } //Try-catch ends
 

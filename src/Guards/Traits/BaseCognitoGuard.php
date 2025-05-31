@@ -35,34 +35,31 @@ trait BaseCognitoGuard
 {
 
     /**
-     * Get the AWS Cognito object
+	 * Get the AWS Cognito object
      *
-     * @return \Ellaisys\Cognito\AwsCognito
-     */
-    public function cognito()
-    {
+	 * @return \Ellaisys\Cognito\AwsCognito
+	 */
+    public function cognito() {
         return $this->cognito;
     } //Function ends
 
 
     /**
-     * Get the User Information from AWS Cognito
+	 * Get the User Information from AWS Cognito
      *
-     * @return  mixed
-     */
-    public function getRemoteUserData(string $username)
-    {
+	 * @return  mixed
+	 */
+    public function getRemoteUserData(string $username) {
         return $this->client->getUser($username);
     } //Function ends
 
 
     /**
-     * Set the User Information into the local DB
+	 * Set the User Information into the local DB
      *
-     * @return  mixed
-     */
-    public function setLocalUserData(array $credentials)
-    {
+	 * @return  mixed
+	 */
+    public function setLocalUserData(array $credentials) {
         try {
             //Get username key in the credentials
             $keyUsername = config('cognito.cognito_user_fields.email', 'email');
@@ -78,15 +75,15 @@ trait BaseCognitoGuard
 
             //Check if the user is not empty
             if (config('cognito.add_missing_local_user', false)) {
-                //Create user object from AWS Cognito
-                $user = [];
+                    //Create user object from AWS Cognito
+                    $user = [];
 
-                //Create user into local DB
-                $this->provider->createUser($user);
+                    //Create user into local DB
+                    $this->provider->createUser($user);
             } else {
                 return null;
             } //End if
-
+                        
         } catch (InvalidUserException | Exception $e) {
             Log::debug('BaseCognitoGuard:setLocalUserData:Exception:');
             throw $e;
@@ -101,8 +98,7 @@ trait BaseCognitoGuard
      *
      * @return \Ellaisys\Cognito\AwsCognitoClient
      */
-    protected function hasValidAWSCredentials(Collection $credentials)
-    {
+    protected function hasValidAWSCredentials(Collection $credentials) {
         //Reset global variables
         $this->challengeName = null;
         $this->challengeData = null;
@@ -136,12 +132,11 @@ trait BaseCognitoGuard
     /**
      * handle Cognito Challenge
      */
-    protected function handleCognitoChallenge(AwsResult $result, string $username)
-    {
+    protected function handleCognitoChallenge(AwsResult $result, string $username) {
 
         //Return value
         $returnValue = null;
-
+        
         switch ($result['ChallengeName']) {
             case 'SOFTWARE_TOKEN_MFA':
                 $returnValue = [
@@ -153,8 +148,6 @@ trait BaseCognitoGuard
 
             case 'SMS_MFA':
             case 'SELECT_MFA_TYPE':
-            case 'MFA_SETUP':
-            case 'EMAIL_OTP':
                 $returnValue = [
                     'status' => $result['ChallengeName'],
                     'session_token' => $result['Session'],
@@ -182,33 +175,33 @@ trait BaseCognitoGuard
      * @param  string  $paramPassword
      * @return array
      */
-    final public function buildCognitoPayload(Collection $request, $paramUsername = 'email', $paramPassword = 'password', bool $isCredential = false): Collection
+    final public function buildCognitoPayload(Collection $request, $paramUsername='email', $paramPassword='password', bool $isCredential=false): Collection
     {
         $payload = [];
 
         //Get key fields
         if ($isCredential) {
-            $rememberMe = $request->has('remember') ? $request['remember'] : false;
+            $rememberMe = $request->has('remember')?$request['remember']:false;
             $payload = array_merge($payload, ['remember' => $rememberMe]);
         } //End if
-
+        
         //Get the configuration fields
-        $userFields = array_filter(config('cognito.cognito_user_fields'), function ($value) {
+        $userFields = array_filter(config('cognito.cognito_user_fields'), function($value) {
             return !empty($value);
         });
 
         if ($userFields) {
             //Iterate all the keys in the request
-            $request->each(function ($value, $key) use ($userFields, $paramUsername, $paramPassword, &$payload, $isCredential) {
+            $request->each(function($value, $key) use ($userFields, $paramUsername, $paramPassword, &$payload, $isCredential) {
                 switch ($key) {
                     case $paramUsername:
                         $payload = array_merge($payload, ['email' => $value]);
                         break;
-
+                    
                     case $paramPassword:
                         $payload = array_merge($payload, ['password' => $value]);
                         break;
-
+                    
                     default:
                         if ($isCredential && array_key_exists($key, $userFields)) {
                             $payload = array_merge($payload, [$key => $value]);
@@ -227,8 +220,7 @@ trait BaseCognitoGuard
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable
      */
-    protected function hasValidLocalCredentials(Collection $credentials): Authenticatable
-    {
+    protected function hasValidLocalCredentials(Collection $credentials): Authenticatable {
         try {
             $user = $this->provider->retrieveByCredentials($credentials->toArray());
 
@@ -243,7 +235,7 @@ trait BaseCognitoGuard
 
                     //Create user object from cognito data
                     $payloadUser = $this->buildLocalUserPayload(collect($userRemote['UserAttributes']));
-
+                    
                     //Create user into local DB
                     if ($this->createLocalUser($payloadUser->toArray())) {
                         $user = $this->provider->retrieveByCredentials($credentials->toArray());
@@ -252,7 +244,7 @@ trait BaseCognitoGuard
                     throw new NoLocalUserException();
                 } //End if
             } //End if
-
+    
             return $user;
         } catch (InvalidUserException | NoLocalUserException | Exception $e) {
             Log::debug('BaseCognitoGuard:setLocalUserData:Exception');
@@ -275,13 +267,13 @@ trait BaseCognitoGuard
 
         try {
             //Get the configuration fields
-            $userFields = array_filter(config('cognito.cognito_user_fields'), function ($value) {
+            $userFields = array_filter(config('cognito.cognito_user_fields'), function($value) {
                 return !empty($value);
             });
 
             if ($userFields) {
                 //Iterate all the keys in the request
-                $request->each(function ($value) use ($userFields, &$payload) {
+                $request->each(function($value) use ($userFields, &$payload) {
                     if (array_key_exists($value['Name'], $userFields)) {
                         $payload = array_merge($payload, [$userFields[$value['Name']] => $value['Value']]);
                     } //End if
@@ -301,14 +293,14 @@ trait BaseCognitoGuard
         return collect($payload);
     } //Function ends
 
-
+    
     /**
      * Create a local user if one does not exist.
      *
      * @param  array  $credentials
      * @return mixed
      */
-    final public function createLocalUser(array $dataUser, string $keyPassword = 'password')
+    final public function createLocalUser(array $dataUser, string $keyPassword='password')
     {
         $user = null;
         if (config('cognito.add_missing_local_user')) {
@@ -319,7 +311,7 @@ trait BaseCognitoGuard
             if (array_key_exists($keyPassword, $dataUser)) {
                 unset($dataUser[$keyPassword]);
             } //End if
-
+            
             //Create user into local DB, if not exists
             $user = $userModel::updateOrCreate($dataUser);
         } //End if
@@ -327,8 +319,4 @@ trait BaseCognitoGuard
         return $user;
     } //Function ends
 
-    public function setUserAttributes(string $username, array $attributes)
-    {
-        $this->client->setUserAttributes($username, $attributes);
-    }
 } //Trait ends
