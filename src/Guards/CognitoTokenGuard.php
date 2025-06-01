@@ -67,7 +67,7 @@ class CognitoTokenGuard extends TokenGuard
      * @var \Ellaisys\Cognito\AwsCognitoClaim|null
      */
     protected $claim;
-    
+
 
     /**
      * @var Authentication Challenge
@@ -173,7 +173,7 @@ class CognitoTokenGuard extends TokenGuard
                     case 'NotAuthorizedException':
                         $errorCode = 'cognito.validation.auth.user_unauthorized';
                         break;
-                    
+
                     default:
                         $errorCode = $e->getAwsErrorCode();
                         break;
@@ -233,7 +233,7 @@ class CognitoTokenGuard extends TokenGuard
                     unset($claim['username']);
                     unset($claim['user']);
                     break;
-                
+
                 default:
                     # code...
                     break;
@@ -310,7 +310,7 @@ class CognitoTokenGuard extends TokenGuard
             //Revoke the token from AWS Cognito
             if ($this->client->signOut($accessToken)) {
 
-                //Global logout and invalidate the Refresh Token 
+                //Global logout and invalidate the Refresh Token
                 if ($forceForever) {
                     //Get claim data
                     $data = $this->cognito->getClaim();

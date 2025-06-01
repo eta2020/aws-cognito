@@ -188,10 +188,4 @@ trait RegisterMFA
             throw $e;
         } //Try-catch ends
     } //Function ends
-
-    public function getRemoteUserData(string $guard = 'web', string $username)
-    {
-        $response = Auth::guard($guard)->getRemoteUserData($username);
-        return $response->toArray();
-    } //Function ends
 } //Trait ends

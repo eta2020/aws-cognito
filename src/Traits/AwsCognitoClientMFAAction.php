@@ -162,7 +162,7 @@ trait AwsCognitoClientMFAAction
     public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username)
     {
         try {
-            if (in_array($challengeName, [AwsCognitoClient::SMS_MFA, AwsCognitoClient::SOFTWARE_TOKEN_MFA])) {
+            if (in_array($challengeName, [AwsCognitoClient::SMS_MFA, AwsCognitoClient::SOFTWARE_TOKEN_MFA, AwsCognitoClient::EMAIL_OTP])) {
                 $response = $this->adminRespondToAuthChallenge($challengeName, $session, $challengeValue, $username);
             } else {
                 throw new HttpException(400, 'ERROR_UNSUPPORTED_MFA_CHALLENGE');

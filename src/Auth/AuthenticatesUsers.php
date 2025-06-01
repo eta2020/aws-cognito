@@ -63,7 +63,7 @@ trait AuthenticatesUsers
         return $groups;
     } //End if
 
-    
+
     /**
      * Attempt to log the user into the application.
      *
@@ -125,7 +125,7 @@ trait AuthenticatesUsers
         return $returnValue;
     } //Function ends
 
-    
+
     /**
      * Attempt to log the user into the application.
      *
@@ -164,13 +164,13 @@ trait AuthenticatesUsers
                         throw new HttpException(400, 'ERROR_AWS_COGNITO_SESSION_MFA_CODE');
                     } //End if
                     break;
-                
+
                 case 'api': //API
                     $challengeData = Auth::guard($guard)->getChallengeData($challenge['session']);
                     $username = $challengeData['username'];
                     $challenge['username'] = $username;
                     break;
-                
+
                 default:
                     break;
             } //End switch
@@ -178,19 +178,22 @@ trait AuthenticatesUsers
             //Authenticate User
             $claim = Auth::guard($guard)->attemptMFA($challenge);
         } catch (NoLocalUserException $e) {
+            throw $e;
             Log::error('AuthenticatesUsers:attemptLoginMFA:NoLocalUserException');
             return $this->sendFailedLoginResponse($request, $e, $isJsonResponse, $paramUsername);
         } catch (CognitoIdentityProviderException $e) {
+            throw $e;
             Log::error('AuthenticatesUsers:attemptLoginMFA:CognitoIdentityProviderException');
             return $this->sendFailedLoginResponse($request, $e, $isJsonResponse, $paramName);
         } catch (Exception $e) {
+            throw $e;
             Log::error('AuthenticatesUsers:attemptLoginMFA:Exception');
             Log::error($e);
             switch ($e->getMessage()) {
                 case 'ERROR_AWS_COGNITO_MFA_CODE_NOT_PROPER':
                     $paramName = 'mfa_code';
                     break;
-                
+
                 default:
                     $paramName = 'mfa_code';
                     break;

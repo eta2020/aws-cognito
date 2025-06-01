@@ -732,6 +732,12 @@ class AwsCognitoClient
                     ]);
                     break;
 
+                case 'EMAIL_OTP':
+                    $challengeResponse = array_merge($challengeResponse, [
+                        'EMAIL_OTP_CODE' => $challengeValue
+                    ]);
+                    break;
+
                 case 'NEW_PASSWORD_REQUIRED':
                     $challengeResponse = array_merge($challengeResponse, [
                         'NEW_PASSWORD' => $challengeValue
