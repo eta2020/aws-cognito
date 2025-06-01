@@ -34,7 +34,8 @@ trait CognitoMFA
     /**
      * Attempt MFA based Authentication
      */
-    public function attemptBaseMFA(array $challenge = [], bool $remember=false) {
+    public function attemptBaseMFA(array $challenge = [], bool $remember = false)
+    {
         try {
             //Reset global variables
             $this->challengeName = null;
@@ -66,9 +67,8 @@ trait CognitoMFA
                     throw new HttpException(400, 'ERROR_AWS_COGNITO_MFA_CODE_NOT_PROPER');
                 } //End if
             } //End if
-    
             return $result;
-        } catch(CognitoIdentityProviderException | Exception $e) {
+        } catch (CognitoIdentityProviderException | Exception $e) {
             throw $e;
         } //Try-catch ends
     } //Function ends
@@ -81,21 +81,25 @@ trait CognitoMFA
      *
      * @return array
      */
-    public function associateSoftwareTokenMFA(string $appName=null, string $userParamToAddToQR='email') {
+    public function associateSoftwareTokenMFA(string $appName = null, string $userParamToAddToQR = 'email')
+    {
         try {
             //Get Access Token
             $accessToken = $this->cognito->getToken();
             if (!empty($accessToken)) {
+                if ($accessToken instanceof \Ellaisys\Cognito\AwsCognito) {
+                    $accessToken = $accessToken->getToken()->getClaim()->getData()['AccessToken'];
+                }
                 $response = $this->client->associateSoftwareTokenMFA($accessToken);
                 if (!empty($response)) {
                     //Build payload
                     $secretCode = $response->get('SecretCode');
                     $username = $this->user()[$userParamToAddToQR];
-                    $appName = (!empty($appName))?:config('app.name');
-                    $uriTotp = 'otpauth://totp/'.$appName.' ('.$username.')?secret='.$secretCode.'&issuer='.config('app.name');
+                    $appName = (!empty($appName)) ?: config('app.name');
+                    $uriTotp = 'otpauth://totp/' . $appName . ' (' . $username . ')?secret=' . $secretCode . '&issuer=' . config('app.name');
                     $payload = [
                         'SecretCode' => $secretCode,
-                        'SecretCodeQR' => config('cognito.mfa_qr_library').$uriTotp,
+                        'SecretCodeQR' => config('cognito.mfa_qr_library') . $uriTotp,
                         'TotpUri' => $uriTotp
                     ];
                     return $payload;
@@ -103,7 +107,7 @@ trait CognitoMFA
             } else {
                 return null;
             } //End if
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         } //Try-catch ends
     } //Function ends
@@ -111,18 +115,22 @@ trait CognitoMFA
 
     /**
      * Verify the MFA Software Token
-     * 
+     *
      * @param  string  $guard
      * @param  string  $userCode
      * @param  string  $deviceName (optional)
      *
      * @return array
      */
-    public function verifySoftwareTokenMFA(string $userCode, string $deviceName=null) {
+    public function verifySoftwareTokenMFA(string $userCode, string $deviceName = null)
+    {
         try {
             //Get Access Token
             $accessToken = $this->cognito->getToken();
             if (!empty($accessToken)) {
+                if ($accessToken instanceof \Ellaisys\Cognito\AwsCognito) {
+                    $accessToken = $accessToken->getToken()->getClaim()->getData()['AccessToken'];
+                }
                 $response = $this->client->verifySoftwareTokenMFA($userCode, $accessToken, null, $deviceName);
                 if (!empty($response)) {
                     $payload = [
@@ -133,12 +141,12 @@ trait CognitoMFA
             } else {
                 return null;
             } //End if
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             if ($e instanceof CognitoIdentityProviderException) {
                 throw new HttpException(400, $e->getAwsErrorMessage(), $e);
             } //End if
             throw $e;
         } //Try-catch ends
     } //Function ends
-    
+
 } //Trait ends

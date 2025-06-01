@@ -37,7 +37,7 @@ trait RegisterMFA
      *
      * @return mixed
      */
-    public function activateMFA(string $guard='web')
+    public function activateMFA(string $guard = 'web')
     {
         return Auth::guard($guard)->associateSoftwareTokenMFA();
     } //Function ends
@@ -50,11 +50,11 @@ trait RegisterMFA
      *
      * @return mixed
      */
-    public function verifyMFA(string $guard='web', string $userCode, string $deviceName='my device')
+    public function verifyMFA(string $guard = 'web', $type = 'SOFTWARE_TOKEN_MFA', string $userCode, string $deviceName = 'my device')
     {
         $response = Auth::guard($guard)->verifySoftwareTokenMFA($userCode, $deviceName);
-        if (!empty($response) && ($response['Status']=='SUCCESS')) {
-            return $this->toggleMFA($guard, true);
+        if (!empty($response) && ($response['Status'] == 'SUCCESS')) {
+            return $this->toggleMFA($guard, $type, true);
         } //End if
     } //Function ends
 
@@ -66,9 +66,9 @@ trait RegisterMFA
      *
      * @return mixed
      */
-    public function deactivateMFA(string $guard='web')
+    public function deactivateMFA(string $guard = 'web', string $type = 'SOFTWARE_TOKEN_MFA')
     {
-        return $this->toggleMFA($guard, false);
+        return $this->toggleMFA($guard, $type, false);
     } //Function ends
 
 
@@ -76,11 +76,12 @@ trait RegisterMFA
      * Toggle the MFA for the authenticated user
      *
      * @param  string  $guard
+     * @param  string  $type
      * @param  bool    $isEnable (optional)
      *
      * @return array
      */
-    private function toggleMFA(string $guard, bool $isEnable=false)
+    private function toggleMFA(string $guard, string $type, bool $isEnable = false)
     {
         try {
             //Create AWS Cognito Client
@@ -88,25 +89,32 @@ trait RegisterMFA
 
             //Get Authenticated user
             $authUser = Auth::guard($guard)->user();
-            if (empty($authUser)) { throw new HttpException(400, 'EXCEPTION_INVALID_USER'); }
+            if (empty($authUser)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_USER');
+            }
 
             //Token Object
             $objToken = Auth::guard($guard)->cognito()->getToken();
-            if (empty($authUser)) { throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN'); }
+            if (empty($authUser)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN');
+            }
 
             //Access Token
             $accessToken = $objToken;
 
             //Use username from AWS to refresh token, not email from login!
             if (!empty($accessToken)) {
-                $response = $client->setUserMFAPreference($accessToken, $isEnable);
+                if ($accessToken instanceof \Ellaisys\Cognito\AwsCognito) {
+                    $accessToken = $accessToken->getToken()->getClaim()->getData()['AccessToken'];
+                }
+                $response = $client->setUserMFAPreference($type, $accessToken, $isEnable);
                 if (empty($response)) {
                     throw new HttpException(400);
                 } //End if
             } else {
                 throw new HttpException(400, 'EXCEPTION_INVALID_USERNAME_OR_TOKEN');
             } //End if
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             if ($e instanceof CognitoIdentityProviderException) {
                 throw new HttpException(400, $e->getAwsErrorMessage(), $e);
             } //End if
@@ -123,9 +131,9 @@ trait RegisterMFA
      *
      * @return mixed
      */
-    public function enableMFA(string $guard='web', string $username)
+    public function enableMFA(string $guard = 'web', string $type, string $username)
     {
-        return $this->toggleAdminMFA($guard, $username, true);
+        return $this->toggleAdminMFA($guard, $type, $username, true);
     } //Function ends
 
 
@@ -137,9 +145,9 @@ trait RegisterMFA
      *
      * @return mixed
      */
-    public function disableMFA(string $guard='web', string $username)
+    public function disableMFA(string $guard = 'web', string $type, string $username)
     {
-        return $this->toggleAdminMFA($guard, $username, false);
+        return $this->toggleAdminMFA($guard, $type, $username, false);
     } //Function ends
 
 
@@ -152,23 +160,28 @@ trait RegisterMFA
      *
      * @return array
      */
-    private function toggleAdminMFA(string $guard, string $username, bool $isEnable=false)
+    private function toggleAdminMFA(string $guard, string $type, $username = null, bool $isEnable = false)
     {
         try {
             //Create AWS Cognito Client
             $client = app()->make(AwsCognitoClient::class);
 
-            //Get Authenticated user
-            $authUser = Auth::guard($guard)->user();
-            if (empty($authUser)) { throw new HttpException(400, 'EXCEPTION_INVALID_USER'); }
+            if (is_null($username)) {
+                //Get Authenticated user
+                $authUser = Auth::guard($guard)->user();
+                if (empty($authUser)) {
+                    throw new HttpException(400, 'EXCEPTION_INVALID_USER');
+                }
+                $username = $authUser->email;
+            }
 
             //Use username for the MFA configurations
             if (!empty($username)) {
-                return $client->setUserMFAPreferenceByAdmin($username, $isEnable);
+                return $client->setUserMFAPreferenceByAdmin($type, $username, $isEnable);
             } else {
                 return response()->json(['error' => 'cognito.validation.invalid_username'], 400);
             } //End if
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             if ($e instanceof CognitoIdentityProviderException) {
                 return response()->json(['error' => ['code' => $e->getAwsErrorCode(), 'message' => $e->getAwsErrorMessage()]], 400);
             } //End if
@@ -176,4 +189,9 @@ trait RegisterMFA
         } //Try-catch ends
     } //Function ends
 
+    public function getRemoteUserData(string $guard = 'web', string $username)
+    {
+        $response = Auth::guard($guard)->getRemoteUserData($username);
+        return $response->toArray();
+    } //Function ends
 } //Trait ends

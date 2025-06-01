@@ -27,10 +27,10 @@ trait AwsCognitoClientMFAAction
      *
      * @param string $accessToken (optional)
      * @param string $session (optional)
-     * 
+     *
      * @return mixed
      */
-    public function associateSoftwareTokenMFA(string $accessToken=null, string $session=null)
+    public function associateSoftwareTokenMFA(string $accessToken = null, string $session = null)
     {
         try {
             //Build payload
@@ -38,13 +38,13 @@ trait AwsCognitoClientMFAAction
 
             //Access Token based Software MFA Token
             if (!empty($accessToken)) {
-                $payload = array_merge($payload, [ 'AccessToken' => $accessToken ]);
-                $session=null;
+                $payload = array_merge($payload, ['AccessToken' => $accessToken]);
+                $session = null;
             } //End if
 
             //Session based Software MFA Token
             if (!empty($session)) {
-                $payload = array_merge($payload, [ 'Session' => $session ]);
+                $payload = array_merge($payload, ['Session' => $session]);
             } //End if
 
             $response = $this->client->associateSoftwareToken($payload);
@@ -64,10 +64,10 @@ trait AwsCognitoClientMFAAction
      * @param string $accessToken (optional)
      * @param string $session (optional)
      * @param string $deviceName (optional)
-     * 
+     *
      * @return mixed
      */
-    public function verifySoftwareTokenMFA(string $userCode, string $accessToken=null, string $session=null, string $deviceName=null)
+    public function verifySoftwareTokenMFA(string $userCode, string $accessToken = null, string $session = null, string $deviceName = null)
     {
         try {
             //Build payload
@@ -78,13 +78,13 @@ trait AwsCognitoClientMFAAction
 
             //Access Token based Software MFA Token
             if (!empty($accessToken)) {
-                $payload = array_merge($payload, [ 'AccessToken' => $accessToken ]);
-                $session=null;
+                $payload = array_merge($payload, ['AccessToken' => $accessToken]);
+                $session = null;
             } //End if
 
             //Session based Software MFA Token
             if (!empty($session)) {
-                $payload = array_merge($payload, [ 'Session' => $session ]);
+                $payload = array_merge($payload, ['Session' => $session]);
             } //End if
 
             $response = $this->client->verifySoftwareToken($payload);
@@ -103,7 +103,7 @@ trait AwsCognitoClientMFAAction
      * @param string $username
      * @return mixed
      */
-    public function setUserMFAPreference(string $accessToken, bool $isEnable=false)
+    public function setUserMFAPreference(string $type, string $accessToken, bool $isEnable = false)
     {
         try {
             //Build payload
@@ -111,7 +111,7 @@ trait AwsCognitoClientMFAAction
                 'AccessToken' => $accessToken,
                 'UserPoolId' => $this->poolId
             ];
-            $payload = array_merge($payload, $this->setMFAPreference($isEnable));
+            $payload = array_merge($payload, $this->setMFAPreference($type, $isEnable));
 
             $response = $this->client->setUserMFAPreference($payload);
         } catch (Exception $e) {
@@ -127,10 +127,10 @@ trait AwsCognitoClientMFAAction
      * https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminSetUserMFAPreference.html
      *
      * @param string $username
-     * 
+     *
      * @return mixed
      */
-    public function setUserMFAPreferenceByAdmin(string $username, bool $isEnable=false)
+    public function setUserMFAPreferenceByAdmin(string $type, string $username, bool $isEnable = false)
     {
         try {
             //Build payload
@@ -138,7 +138,7 @@ trait AwsCognitoClientMFAAction
                 'Username' => $username,
                 'UserPoolId' => $this->poolId
             ];
-            $payload = array_merge($payload, $this->setMFAPreference($isEnable));
+            $payload = array_merge($payload, $this->setMFAPreference($type, $isEnable));
 
             $response = $this->client->adminSetUserMFAPreference($payload);
         } catch (Exception $e) {
@@ -156,7 +156,7 @@ trait AwsCognitoClientMFAAction
      * @param string $session
      * @param string $challengeValue
      * @param string $username
-     *  
+     *
      * @return \Aws\Result|false
      */
     public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username)
@@ -180,28 +180,37 @@ trait AwsCognitoClientMFAAction
      *
      * @return mixed
      */
-    private function setMFAPreference(bool $isEnable)
+    private function setMFAPreference(string $type, bool $isEnable)
     {
         try {
             //Build payload
             $payload = [];
 
             $mfaTypes = explode(',', config('cognito.mfa_type', 'SOFTWARE_TOKEN_MFA'));
-            $firstMfaType=null;
+            $firstMfaType = null;
             foreach ($mfaTypes as $mfaType) {
-                if (empty($firstMfaType)) { $firstMfaType=$mfaType; }
-                
+                if (empty($firstMfaType)) {
+                    $firstMfaType = $mfaType;
+                }
+
                 $payload = array_merge($payload, [
                     'SMSMfaSettings' => [
-                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SMS_MFA'):false,
-                        'PreferredMfa' => (($firstMfaType=='SMS_MFA') && ($isEnable))
+                        'Enabled' => ($type == 'SMS_MFA') ? $isEnable : false,
+                        'PreferredMfa' => ($type == 'SMS_MFA') ? $isEnable : false
                     ]
                 ]);
 
                 $payload = array_merge($payload, [
                     'SoftwareTokenMfaSettings' => [
-                        'Enabled' => ((config('cognito.mfa_setup', 'MFA_NONE')=='MFA_ENABLED') && ($isEnable))?($mfaType=='SOFTWARE_TOKEN_MFA'):false,
-                        'PreferredMfa' => (($firstMfaType=='SOFTWARE_TOKEN_MFA') && ($isEnable))
+                        'Enabled' => ($type == 'SOFTWARE_TOKEN_MFA') ? $isEnable : false,
+                        'PreferredMfa' => ($type == 'SOFTWARE_TOKEN_MFA') ? $isEnable : false
+                    ]
+                ]);
+
+                $payload = array_merge($payload, [
+                    'EmailMfaSettings' => [
+                        'Enabled' => ($type == 'EMAIL_OTP') ? $isEnable : false,
+                        'PreferredMfa' => ($type == 'EMAIL_OTP') ? $isEnable : false
                     ]
                 ]);
             } //Loop ends
