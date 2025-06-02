@@ -118,7 +118,7 @@ class CognitoTokenGuard extends TokenGuard
      * @throws
      * @return bool
      */
-    public function attempt(array $request = [], $remember = false, string $paramUsername='email', string $paramPassword='password')
+    public function attempt(array $request = [], $remember = false, string $paramUsername = 'email', string $paramPassword = 'password')
     {
         $returnValue = null;
         try {
@@ -156,10 +156,10 @@ class CognitoTokenGuard extends TokenGuard
                 throw new InvalidUserException();
             } //End if
         } catch (NoLocalUserException $e) {
-            Log::error('CognitoTokenGuard:attempt:NoLocalUserException:'.$e->getMessage());
+            Log::error('CognitoTokenGuard:attempt:NoLocalUserException:' . $e->getMessage());
             throw $e;
         } catch (CognitoIdentityProviderException $e) {
-            Log::error('CognitoTokenGuard:attempt:CognitoIdentityProviderException:'.$e->getAwsErrorCode());
+            Log::error('CognitoTokenGuard:attempt:CognitoIdentityProviderException:' . $e->getAwsErrorCode());
             $returnValue = $e->getAwsErrorCode();
 
             //Set proper route
@@ -189,10 +189,10 @@ class CognitoTokenGuard extends TokenGuard
 
             return $returnValue;
         } catch (AwsCognitoException | InvalidUserException $e) {
-            Log::error('CognitoTokenGuard:attempt:AwsCognitoException:'. $e->getMessage());
+            Log::error('CognitoTokenGuard:attempt:AwsCognitoException:' . $e->getMessage());
             throw $e;
         } catch (Exception $e) {
-            Log::error('CognitoTokenGuard:attempt:Exception:'.$e->getMessage());
+            Log::error('CognitoTokenGuard:attempt:Exception:' . $e->getMessage());
             throw $e;
         } //Try-catch ends
 
@@ -337,23 +337,25 @@ class CognitoTokenGuard extends TokenGuard
      *
      * @return \Illuminate\Contracts\Auth\Authenticatable
      */
-    public function user() {
+    public function user()
+    {
 
         //Check if the user exists
         if (!is_null($this->user)) {
-			return $this->user;
-		} //End if
+            return $this->user;
+        } //End if
 
         //Retrieve token from request and authenticate
-		return $this->getTokenForRequest();
+        return $this->getTokenForRequest();
     } //Function ends
 
 
     /**
-	 * Get the token for the current request.
-	 * @return string
-	 */
-	public function getTokenForRequest () {
+     * Get the token for the current request.
+     * @return string
+     */
+    public function getTokenForRequest()
+    {
         //Check for request having token
         if (! $this->cognito->parser()->setRequest($this->request)->hasToken()) {
             return null;
@@ -371,14 +373,15 @@ class CognitoTokenGuard extends TokenGuard
 
         //Get user and return
         return $this->user = $this->provider->retrieveById($claim['sub']);
-	} //Function ends
+    } //Function ends
 
 
     /**
-	 * Get the user from the provider.
-	 * @return User
-	 */
-	public function getUser (string $identifier) {
+     * Get the user from the provider.
+     * @return User
+     */
+    public function getUser(string $identifier)
+    {
         return $this->provider->retrieveById($identifier);
     } //Function ends
 
@@ -393,7 +396,8 @@ class CognitoTokenGuard extends TokenGuard
      *
      * @return bool
      */
-    public function attemptMFA(array $challenge=[], bool $remember=false) {
+    public function attemptMFA(array $challenge = [], bool $remember = false)
+    {
         $returnValue = null;
         try {
             $responseCognito = $this->attemptBaseMFA($challenge, $remember);
@@ -416,11 +420,20 @@ class CognitoTokenGuard extends TokenGuard
             } else {
                 throw new InvalidUserException();
             } //End if
-        } catch(AwsCognitoException | InvalidUserException | Exception $e) {
+        } catch (AwsCognitoException | InvalidUserException | Exception $e) {
             throw $e;
         } //Try-catch ends
 
         return $returnValue;
     } //Function ends
 
+    public function confirmDevice(string $accessToken, string $deviceKey, string $deviceName = null)
+    {
+        $this->client->confirmDevice($accessToken, $deviceKey, $deviceName);
+    } //Function ends
+
+    public function updateDeviceStatus(string $accessToken, string $deviceKey)
+    {
+        $this->client->updateDeviceStatus($accessToken, $deviceKey);
+    } //Function ends
 } //Class ends

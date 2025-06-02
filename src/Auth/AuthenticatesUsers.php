@@ -150,7 +150,7 @@ trait AuthenticatesUsers
             } //End if
 
             //Generate challenge array
-            $challenge = $request->only(['challenge_name', 'session', 'mfa_code'])->toArray();
+            $challenge = $request->only(['challenge_name', 'session', 'mfa_code', 'device_key'])->toArray();
 
             //Fetch user details
             switch ($guard) {

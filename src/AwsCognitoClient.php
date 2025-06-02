@@ -23,7 +23,7 @@ use Ellaisys\Cognito\Exceptions\InvalidUserException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Aws\CognitoIdentityProvider\CognitoIdentityProviderClient;
 use Aws\CognitoIdentityProvider\Exception\InvalidPasswordException;
-use Aws\CognitoIdentityProvider\Exception\NotAuthorizedException ;
+use Aws\CognitoIdentityProvider\Exception\NotAuthorizedException;
 use Aws\CognitoIdentityProvider\Exception\CognitoIdentityProviderException;
 
 class AwsCognitoClient
@@ -187,8 +187,7 @@ class AwsCognitoClient
         $clientSecret,
         $poolId,
         $boolClientSecret
-    )
-    {
+    ) {
         $this->client = $client;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
@@ -291,7 +290,7 @@ class AwsCognitoClient
      * @param array $clientMetadata (optional)
      * @return string
      */
-    public function sendResetLink($username, array $clientMetadata=null)
+    public function sendResetLink($username, array $clientMetadata = null)
     {
         try {
             //Build payload
@@ -379,7 +378,8 @@ class AwsCognitoClient
     public function adminListGroupsForUser(string $username)
     {
         try {
-            $groups = $this->client->AdminListGroupsForUser([
+            $groups = $this->client->AdminListGroupsForUser(
+                [
                     'UserPoolId' => $this->poolId, // REQUIRED
                     'Username' => $username // REQUIRED
                 ]
@@ -429,13 +429,19 @@ class AwsCognitoClient
      * @param string $messageAction (optional)
      * @return bool $groupname (optional)
      */
-    public function inviteUser(string $username, string $password=null, array $attributes = [],
-                               array $clientMetadata=null, string $messageAction=null,
-                               string $groupname=null)
-    {
+    public function inviteUser(
+        string $username,
+        string $password = null,
+        array $attributes = [],
+        array $clientMetadata = null,
+        string $messageAction = null,
+        string $groupname = null
+    ) {
         //Validate phone for MFA
-        if (config('cognito.mfa_setup')=="MFA_ENABLED") {
-            if (empty($attributes['phone_number'])) { throw new HttpException(400, 'ERROR_MFA_ENABLED_PHONE_MISSING'); }
+        if (config('cognito.mfa_setup') == "MFA_ENABLED") {
+            if (empty($attributes['phone_number'])) {
+                throw new HttpException(400, 'ERROR_MFA_ENABLED_PHONE_MISSING');
+            }
         } //End if
 
         //Force validate email
@@ -466,17 +472,17 @@ class AwsCognitoClient
         } //End If
 
         //Set Delivery Mediums
-        if ((config('cognito.add_user_delivery_mediums')!="NONE")) {
-            if (config('cognito.add_user_delivery_mediums')=="BOTH") {
+        if ((config('cognito.add_user_delivery_mediums') != "NONE")) {
+            if (config('cognito.add_user_delivery_mediums') == "BOTH") {
                 $payload['DesiredDeliveryMediums'] = ['EMAIL', 'SMS'];
             } else {
                 $defaultDeliveryMedium = config('cognito.add_user_delivery_mediums', "EMAIL");
-                $payload['DesiredDeliveryMediums'] = [ $defaultDeliveryMedium ];
+                $payload['DesiredDeliveryMediums'] = [$defaultDeliveryMedium];
             } //End if
         } //End if
-        if (config('cognito.mfa_setup')=="MFA_ENABLED") {
+        if (config('cognito.mfa_setup') == "MFA_ENABLED") {
             $defaultDeliveryMedium = 'SMS';
-            $payload['DesiredDeliveryMediums'] = [ $defaultDeliveryMedium ];
+            $payload['DesiredDeliveryMediums'] = [$defaultDeliveryMedium];
         } //End if
 
         try {
@@ -634,7 +640,7 @@ class AwsCognitoClient
                 return 'validation.invalid_token';
             } //End if
 
-            if ($e->getAwsErrorCode() === 'NotAuthorizedException' AND $e->getAwsErrorMessage() === 'User cannot be confirmed. Current status is CONFIRMED') {
+            if ($e->getAwsErrorCode() === 'NotAuthorizedException' and $e->getAwsErrorMessage() === 'User cannot be confirmed. Current status is CONFIRMED') {
                 return 'validation.confirmed';
             } //End if
 
@@ -705,7 +711,7 @@ class AwsCognitoClient
      *
      * @return \Aws\Result
      */
-    protected function adminRespondToAuthChallenge(string $challengeName, string $session, string $challengeValue, string $username)
+    protected function adminRespondToAuthChallenge(string $challengeName, string $session, string $challengeValue, string $username, string $deviceKey = null)
     {
         try {
 
@@ -718,7 +724,7 @@ class AwsCognitoClient
             ];
 
             //Set challenge response
-            $challengeResponse=['USERNAME' => $username];
+            $challengeResponse = ['USERNAME' => $username];
             switch ($challengeName) {
                 case 'SMS_MFA':
                     $challengeResponse = array_merge($challengeResponse, [
@@ -728,7 +734,8 @@ class AwsCognitoClient
 
                 case 'SOFTWARE_TOKEN_MFA':
                     $challengeResponse = array_merge($challengeResponse, [
-                        'SOFTWARE_TOKEN_MFA_CODE' => $challengeValue
+                        'SOFTWARE_TOKEN_MFA_CODE' => $challengeValue,
+                        'DEVICE_KEY' => $deviceKey
                     ]);
                     break;
 
@@ -759,6 +766,7 @@ class AwsCognitoClient
             //Execute the payload
             $response = $this->client->adminRespondToAuthChallenge($payload);
         } catch (CognitoIdentityProviderException $e) {
+            dd($e);
             throw $e;
         } //Try-catch ends
 
@@ -864,7 +872,7 @@ class AwsCognitoClient
      * @param array $attributes
      * @return array $clientMetadata (optional)
      */
-    protected function buildClientMetadata(array $attributes, array $clientMetadata=null)
+    protected function buildClientMetadata(array $attributes, array $clientMetadata = null)
     {
         if (!empty($clientMetadata)) {
             $userAttributes = array_merge($attributes, $clientMetadata);
@@ -953,7 +961,6 @@ class AwsCognitoClient
             $this->client->globalSignOut([
                 'AccessToken' => $accessToken
             ]);
-
         } catch (CognitoIdentityProviderException $e) {
             if ($e->getAwsErrorCode() === self::COGNITO_NOT_AUTHORIZED_ERROR) {
                 return true;
@@ -964,6 +971,24 @@ class AwsCognitoClient
             throw $e;
         } //Try-catch ends
         return true;
+    } //Function ends
+
+    public function confirmDevice(string $accessToken, string $deviceKey, $deviceName = null)
+    {
+        return $this->client->rememberDevice([
+            'AccessToken' => $accessToken,
+            'DeviceKey' => $deviceKey,
+            'DeviceName' => $deviceName ?? 'My Device',
+        ]);
+    } //Function ends
+
+    public function updateDeviceStatus(string $accessToken, string $deviceKey)
+    {
+        return $this->client->updateDeviceStatus([
+            'AccessToken' => $accessToken,
+            'DeviceKey' => $deviceKey,
+            'DeviceRememberedStatus' => 'remembered',
+        ]);
     } //Function ends
 
 } //Class ends

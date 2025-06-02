@@ -187,5 +187,53 @@ trait RegisterMFA
             } //End if
             throw $e;
         } //Try-catch ends
+    } //Function ends\
+
+    public function confirmDevice(string $guard = 'web', string $deviceKey,  $deviceName = null)
+    {
+        try {
+            //Token Object
+            $objToken = Auth::guard($guard)->cognito()->getToken();
+            if (empty($objToken)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN');
+            }
+
+            //Access Token
+            $accessToken = $objToken;
+            if (empty($accessToken)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN');
+            }
+
+            if ($accessToken instanceof \Ellaisys\Cognito\AwsCognito) {
+                $accessToken = $accessToken->getToken()->getClaim()->getData()['AccessToken'];
+            }
+            return Auth::guard($guard)->confirmDevice($accessToken, $deviceKey, $deviceName);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    } //Function ends
+
+    public function updateDeviceStatus(string $guard = 'web', string $deviceKey)
+    {
+        try {
+            //Token Object
+            $objToken = Auth::guard($guard)->cognito()->getToken();
+            if (empty($objToken)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN');
+            }
+
+            //Access Token
+            $accessToken = $objToken;
+            if (empty($accessToken)) {
+                throw new HttpException(400, 'EXCEPTION_INVALID_TOKEN');
+            }
+
+            if ($accessToken instanceof \Ellaisys\Cognito\AwsCognito) {
+                $accessToken = $accessToken->getToken()->getClaim()->getData()['AccessToken'];
+            }
+            return Auth::guard($guard)->updateDeviceStatus($accessToken, $deviceKey);
+        } catch (Exception $e) {
+            throw $e;
+        }
     } //Function ends
 } //Trait ends

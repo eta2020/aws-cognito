@@ -159,11 +159,11 @@ trait AwsCognitoClientMFAAction
      *
      * @return \Aws\Result|false
      */
-    public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username)
+    public function authMFAChallenge(string $challengeName, string $session, string $challengeValue, string $username, string $deviceKey = null)
     {
         try {
             if (in_array($challengeName, [AwsCognitoClient::SMS_MFA, AwsCognitoClient::SOFTWARE_TOKEN_MFA, AwsCognitoClient::EMAIL_OTP])) {
-                $response = $this->adminRespondToAuthChallenge($challengeName, $session, $challengeValue, $username);
+                $response = $this->adminRespondToAuthChallenge($challengeName, $session, $challengeValue, $username, $deviceKey);
             } else {
                 throw new HttpException(400, 'ERROR_UNSUPPORTED_MFA_CHALLENGE');
             } //End if
