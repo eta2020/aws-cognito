@@ -102,6 +102,7 @@ trait AuthenticatesUsers
             //Authenticate User
             $returnValue = Auth::guard($guard)->attempt($request->toArray(), false, $paramUsername, $paramPassword);
         } catch (NoLocalUserException | CognitoIdentityProviderException | Exception $e) {
+            dd($e);
             $exceptionClass = basename(str_replace('\\', DIRECTORY_SEPARATOR, get_class($e)));
             $exceptionCode = $e->getCode();
             $exceptionMessage = $e->getMessage().':(code:'.$exceptionCode.', line:'.$e->getLine().')';
