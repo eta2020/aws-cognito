@@ -766,7 +766,6 @@ class AwsCognitoClient
             //Execute the payload
             $response = $this->client->adminRespondToAuthChallenge($payload);
         } catch (CognitoIdentityProviderException $e) {
-            dd($e);
             throw $e;
         } //Try-catch ends
 
