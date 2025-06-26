@@ -565,14 +565,6 @@ class AwsCognitoClient
                 'UserPoolId' => $this->poolId,
             ]);
         } catch (CognitoIdentityProviderException $e) {
-            if ($e->getAwsErrorCode() === self::USER_NOT_FOUND) {
-                return Password::INVALID_USER;
-            } //End if
-
-            if ($e->getAwsErrorCode() === self::INVALID_PASSWORD) {
-                return Lang::has('passwords.password') ? 'passwords.password' : $e->getAwsErrorMessage();
-            } //End if
-
             throw $e;
         } //Try-catch ends
 
